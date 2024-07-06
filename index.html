@@ -16,6 +16,7 @@
             border: 2px solid black;
             width: 100%;
             height: auto;
+            touch-action: none; /* Disable default touch actions on canvas */
         }
         .top, .bottom {
             display: flex;
@@ -99,14 +100,39 @@
         const retrieveButton = document.getElementById('retrieveButton');
         const fontSize = document.getElementById('fontSize');
 
-        colorPicker.addEventListener('change', (event) => {
-            ctx.strokeStyle = event.target.value;
+        // Function to get the correct position of touch/mouse relative to the canvas
+        function getTouchPos(canvasDom, touchEvent) {
+            const rect = canvasDom.getBoundingClientRect();
+            return {
+                x: touchEvent.touches[0].clientX - rect.left,
+                y: touchEvent.touches[0].clientY - rect.top
+            };
+        }
+
+        // Add event listeners for touch devices
+        canvas.addEventListener('touchstart', (event) => {
+            event.preventDefault(); // Prevent scrolling
+            const pos = getTouchPos(canvas, event);
+            painting = true;
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
         });
 
-        canvasColor.addEventListener('change', (event) => {
-            canvas.style.backgroundColor = event.target.value;
+        canvas.addEventListener('touchmove', (event) => {
+            event.preventDefault(); // Prevent scrolling
+            if (painting) {
+                const pos = getTouchPos(canvas, event);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
         });
 
+        canvas.addEventListener('touchend', () => {
+            painting = false;
+            ctx.beginPath();
+        });
+
+        // Add event listeners for mouse events (for desktop)
         canvas.addEventListener('mousedown', (event) => {
             painting = true;
             ctx.beginPath();
@@ -131,6 +157,14 @@
 
         fontSize.addEventListener('change', (event) => {
             ctx.lineWidth = event.target.value;
+        });
+
+        colorPicker.addEventListener('change', (event) => {
+            ctx.strokeStyle = event.target.value;
+        });
+
+        canvasColor.addEventListener('change', (event) => {
+            canvas.style.backgroundColor = event.target.value;
         });
 
         clearButton.addEventListener('click', () => {
